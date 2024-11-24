@@ -1,10 +1,11 @@
+import redis
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.security import verify_token
 from app.core.utils import ResponseHandler
 from app.db import get_db
 from sqlalchemy.orm import Session
-
+from app.core.config import settings
 from app.models import Patient
 
 oauth2_scheme = HTTPBearer()
@@ -43,3 +44,10 @@ def include_admin(db: Session = Depends(get_db), credentials: HTTPAuthorizationC
     raise ResponseHandler.no_permission(f'user-{user.id} does not have permission!')
   
   return user 
+
+
+def cache():
+  return redis.Redis(
+    host=settings.redis_host,
+    port=settings.redis_port,
+  )

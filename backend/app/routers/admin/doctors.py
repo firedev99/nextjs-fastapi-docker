@@ -22,9 +22,9 @@ async def get_all_doctors(
 
 
 # create a new hospital account /admin 
-@router.post('/{id}/new', status_code=201)
-async def create_new_doctor(details: DoctorCreateAdmin, id: str, db: Session = Depends(db)):
-  return await DoctorService.new_doctor_account_admin(details, id, db)
+@router.post('/{hospital_id}/new', status_code=201)
+async def create_new_doctor(details: DoctorCreateAdmin, hospital_id: str, db: Session = Depends(db)):
+  return await DoctorService.new_doctor_account_admin(details, hospital_id, db)
 
 
 

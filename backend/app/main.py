@@ -7,6 +7,17 @@ from app.routers.admin import patients as patients_admin, users, hospitals as ho
 from app.core.security import origins
 from app.core.dependecies import include_admin
 
+from app.core.config import settings
+from app.workers.celery import celery
+from app.workers.tasks import send_email_task
+
+import httpx
+import json
+from app.core.dependecies import cache 
+from app.core.utils import ResponseHandler
+from redis import Redis
+
+
 version = 'v1'
 
 app = FastAPI(
@@ -40,6 +51,44 @@ async def custom_http_exception_handler(_: Request, exc: HTTPException):
       "message": exc.detail
     }
   )
+
+
+# redis caching tesing api
+@app.get('/redis/dogs')
+async def read_redis_entries(
+  redis: Redis = Depends(cache)
+):
+  http_client = httpx.AsyncClient()
+  result = redis.get('dogs_api_all')
+
+  if not result:
+    response = await http_client.get('https://dog.ceo/api/breeds/list/all')
+    result = response.json()
+
+    json_data = json.dumps(result)
+    redis.set('dogs_api_all', json_data)
+    
+    return ResponseHandler.fetch_successful('successfully retrieved dogs data!', result)
+
+  return ResponseHandler.fetch_successful('sucessfully retrieve dogs data from redis caching!', json.loads(result))
+ 
+
+# celery tasks testing apis 
+@app.get('/send-email')
+async def run_task():
+  task = send_email_task.apply_async(
+    args=("sauravagun1999@gmail.com", "GlucoGuide Email Tasks", "Testing SMTP Connection!"),
+    countdown=60
+  )
+  return { "status": "successful", "message": f"successfully, sent mail from {settings.owner_email}", "tast_id": task.id }
+
+
+# query a celery task w task id 
+@app.get('/tasks/{task_id}')
+async def get_task_status(task_id: str):
+  task = celery.AsyncResult(task_id)
+  return { "task_id": task_id, "status": task.status, "result": task.result }
+
 
 
 # general routes 

@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-import uuid 
+from fastapi.responses import JSONResponse
 
 class Custom:
   @staticmethod
@@ -35,6 +35,18 @@ class ResponseHandler:
     raise HTTPException(
       status_code=403,
       detail=f"{message}"
+    )
+  
+
+  @staticmethod
+  def fetch_successful(msg, data):
+    return JSONResponse(
+      status_code=200,
+      content={
+        "status": "successful",
+        "message": msg,
+        "data": data
+      }
     )
   
 
